@@ -1,53 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from './firebase';
+import { ref, onValue } from "firebase/database";
 
-const Home = ({ onStartTest, goToAdmin }) => {
+const Home = ({ startTest, goToAdmin }) => {
   const [userName, setUserName] = useState('');
+  const [categories, setCategories] = useState([]); // DB에서 가져온 카테고리들
+  const [selectedChapter, setSelectedChapter] = useState('');
+
+  // 1️⃣ DB에서 카테고리 목록 가져오기
+  useEffect(() => {
+    const catRef = ref(db, 'categories');
+    onValue(catRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.keys(data).map(key => ({
+          id: key,
+          name: data[key].name
+        }));
+        setCategories(list);
+      } else {
+        setCategories([]);
+      }
+    });
+  }, []);
 
   const handleStart = () => {
     if (!userName.trim()) {
-      alert("이름을 입력해주세요!");
+      alert('이름을 입력해주세요!');
       return;
     }
-    // App.js에서 넘겨받은 함수를 실행하며 이름을 전달합니다.
-    onStartTest(userName); 
+    if (!selectedChapter) {
+      alert('응시할 시험을 선택해주세요!');
+      return;
+    }
+    // 선택한 챕터 ID를 넘겨서 시험 시작
+    startTest(userName, selectedChapter);
   };
 
   return (
-    <div className="container vh-100 d-flex flex-column justify-content-center align-items-center position-relative">
-      
-      {/* 메인 타이틀 */}
-      <h1 className="mb-5 fw-bold text-primary">단어 암기 프로그램</h1>
+    <div className="container py-5">
+      <div className="row justify-content-center">
+        <div className="col-md-6 text-center">
+          <h1 className="fw-bold text-primary mb-2">진민T 시험장</h1>
+          <p className="text-muted mb-5">오늘의 학습을 확인해봅시다!</p>
 
-      {/* 학생 이름 입력 영역 (부트스트랩 카드 스타일) */}
-      <div className="card p-4 shadow-sm border-0" style={{ width: '100%', maxWidth: '400px', borderRadius: '15px' }}>
-        <div className="mb-3">
-          <label htmlFor="studentName" className="form-label fw-bold text-secondary">학생 이름을 입력하세요</label>
-          <input
-            type="text"
-            className="form-control form-control-lg border-2"
-            id="studentName"
-            placeholder="예: 홍길동"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-          />
+          <div className="card shadow border-0 p-4" style={{ borderRadius: '20px' }}>
+            <div className="mb-4">
+              <label className="form-label fw-bold">1. 이름을 입력하세요</label>
+              <input
+                type="text"
+                className="form-control form-control-lg text-center"
+                placeholder="이름"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label fw-bold">2. 시험장을 선택하세요</label>
+              <div className="d-flex flex-wrap justify-content-center gap-2">
+                {categories.length > 0 ? (
+                  categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      className={`btn btn-lg px-4 ${selectedChapter === cat.id ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setSelectedChapter(cat.id)}
+                    >
+                      {cat.name}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-danger small">등록된 시험이 없습니다. 선생님에게 문의하세요.</p>
+                )}
+              </div>
+            </div>
+
+            <button className="btn btn-success btn-lg w-100 fw-bold py-3 shadow-sm" onClick={handleStart}>
+              시험 시작하기!
+            </button>
+          </div>
+
+          <button className="btn btn-link text-secondary mt-4 btn-sm" onClick={goToAdmin}>
+            관리자 로그인
+          </button>
         </div>
-        <button 
-          className="btn btn-primary btn-lg w-100 fw-bold shadow-sm" 
-          onClick={handleStart}
-        >
-          START
-        </button>
       </div>
-
-      {/* 우측 하단 관리자 이동 버튼 (작고 심플하게) */}
-      <button 
-        className="btn btn-link btn-sm text-decoration-none text-secondary position-absolute" 
-        style={{ bottom: '20px', right: '20px' }}
-        onClick={goToAdmin}
-      >
-        ⚙️ 교사용 페이지 이동
-      </button>
-
     </div>
   );
 };
