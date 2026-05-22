@@ -14,6 +14,14 @@ const Login = ({ onLoginSuccess, goBack }) => {
 
   return (
     <div className="container vh-100 d-flex flex-column justify-content-center align-items-center">
+
+      {process.env.REACT_APP_IS_DEMO === 'true' && (
+        <div className="alert alert-warning text-center mb-4" style={{ width: '100%', maxWidth: '350px' }}>
+          <strong>🔐 데모 관리자 계정</strong><br />
+          아이디: <code>admin</code> &nbsp;|&nbsp; 비밀번호: <code>1234</code>
+        </div>
+      )}
+
       <div className="card p-4 shadow-sm" style={{ width: '100%', maxWidth: '350px' }}>
         <h3 className="text-center mb-4 fw-bold">관리자 확인</h3>
         <div className="mb-2">
