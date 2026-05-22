@@ -40,7 +40,7 @@ const Admin = ({ goBack }) => {
         if (!targetSchool && list.length > 0) setTargetSchool(list[0].id);
       } else { setSchools([]); setTargetSchool(''); }
     });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 챕터 로드
   useEffect(() => {
@@ -54,7 +54,7 @@ const Admin = ({ goBack }) => {
         if (!targetChapter && list.length > 0) setTargetChapter(list[0].id);
       } else { setCategories([]); setTargetChapter(''); }
     });
-  }, [targetSchool]);
+  }, [targetSchool]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 문제 로드
   useEffect(() => {
@@ -146,7 +146,6 @@ const Admin = ({ goBack }) => {
     ? allResults.filter(r => r.chapterId === filterChapter)
     : allResults;
 
-  // 모든 챕터 목록 (결과 필터용)
   const allChapterIds = [...new Set(allResults.map(r => r.chapterId).filter(Boolean))];
 
   return (
@@ -156,7 +155,6 @@ const Admin = ({ goBack }) => {
         <button className="btn btn-outline-secondary btn-sm" onClick={goBack}>로그아웃</button>
       </div>
 
-      {/* 탭 */}
       <ul className="nav nav-tabs mb-4">
         <li className="nav-item">
           <button className={`nav-link fw-bold ${activeTab === 'manage' ? 'active' : ''}`} onClick={() => setActiveTab('manage')}>
@@ -171,10 +169,8 @@ const Admin = ({ goBack }) => {
         </li>
       </ul>
 
-      {/* ===== 문제 관리 탭 ===== */}
       {activeTab === 'manage' && (
         <>
-          {/* 학교 관리 */}
           <div className="card shadow-sm mb-4 border-0">
             <div className="card-body">
               <h5 className="fw-bold mb-3">🏫 학교 관리</h5>
@@ -202,7 +198,6 @@ const Admin = ({ goBack }) => {
             </div>
           </div>
 
-          {/* 챕터 관리 */}
           {targetSchool && (
             <div className="card shadow-sm mb-4 border-0">
               <div className="card-body">
@@ -272,7 +267,6 @@ const Admin = ({ goBack }) => {
             </div>
           )}
 
-          {/* 문제 등록 */}
           {targetChapter && (
             <>
               <div className="card shadow-sm mb-4 border-primary">
@@ -374,11 +368,9 @@ const Admin = ({ goBack }) => {
         </>
       )}
 
-      {/* ===== 학생 결과 탭 ===== */}
       {activeTab === 'results' && (
         <>
           {selectedResult ? (
-            /* 상세 결과 화면 */
             <div>
               <button className="btn btn-outline-secondary btn-sm mb-3" onClick={() => setSelectedResult(null)}>
                 ← 목록으로
@@ -395,7 +387,6 @@ const Admin = ({ goBack }) => {
                   </h4>
                 </div>
               </div>
-
               <div className="list-group shadow-sm">
                 {(selectedResult.details || []).map((d, idx) => (
                   <div key={idx} className={`list-group-item p-3 ${d.isCorrect ? 'list-group-item-success' : 'list-group-item-danger'}`}>
@@ -416,7 +407,6 @@ const Admin = ({ goBack }) => {
                   </div>
                 ))}
               </div>
-
               <button className="btn btn-outline-danger btn-sm mt-3 w-100" onClick={() => {
                 if (window.confirm("이 결과를 삭제하시겠습니까?")) {
                   remove(ref(db, `results/${selectedResult.id}`));
@@ -425,7 +415,6 @@ const Admin = ({ goBack }) => {
               }}>🗑 이 결과 삭제</button>
             </div>
           ) : (
-            /* 결과 목록 */
             <>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h5 className="fw-bold mb-0">📊 응시 결과 목록</h5>
@@ -438,7 +427,6 @@ const Admin = ({ goBack }) => {
                   })}
                 </select>
               </div>
-
               {filteredResults.length === 0 ? (
                 <div className="text-center text-muted py-5">아직 응시 결과가 없습니다.</div>
               ) : (
