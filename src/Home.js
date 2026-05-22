@@ -4,37 +4,52 @@ import { ref, onValue } from "firebase/database";
 
 const Home = ({ startTest, goToAdmin }) => {
   const [userName, setUserName] = useState('');
-  const [categories, setCategories] = useState([]); // DB에서 가져온 카테고리들
+  const [schools, setSchools] = useState([]);
+  const [selectedSchool, setSelectedSchool] = useState('');
+  const [categories, setCategories] = useState([]);
   const [selectedChapter, setSelectedChapter] = useState('');
+  const [selectedChapterData, setSelectedChapterData] = useState(null);
 
-  // 1️⃣ DB에서 카테고리 목록 가져오기
   useEffect(() => {
-    const catRef = ref(db, 'categories');
-    onValue(catRef, (snapshot) => {
+    const schoolRef = ref(db, 'schools');
+    onValue(schoolRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const list = Object.keys(data).map(key => ({
-          id: key,
-          name: data[key].name
-        }));
-        setCategories(list);
+        const list = Object.keys(data).map(key => ({ id: key, name: data[key].name }));
+        setSchools(list);
       } else {
-        setCategories([]);
+        setSchools([]);
       }
     });
   }, []);
 
+  useEffect(() => {
+    if (!selectedSchool) { setCategories([]); setSelectedChapter(''); setSelectedChapterData(null); return; }
+    const catRef = ref(db, `categories/${selectedSchool}`);
+    onValue(catRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const list = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        setCategories(list);
+      } else {
+        setCategories([]);
+      }
+      setSelectedChapter('');
+      setSelectedChapterData(null);
+    });
+  }, [selectedSchool]);
+
+  const handleSelectChapter = (cat) => {
+    setSelectedChapter(cat.id);
+    setSelectedChapterData(cat);
+  };
+
   const handleStart = () => {
-    if (!userName.trim()) {
-      alert('이름을 입력해주세요!');
-      return;
-    }
-    if (!selectedChapter) {
-      alert('응시할 시험을 선택해주세요!');
-      return;
-    }
-    // 선택한 챕터 ID를 넘겨서 시험 시작
-    startTest(userName, selectedChapter);
+    if (!userName.trim()) { alert('이름을 입력해주세요!'); return; }
+    if (!selectedSchool) { alert('학교를 선택해주세요!'); return; }
+    if (!selectedChapter) { alert('응시할 시험을 선택해주세요!'); return; }
+    const timeLimitSeconds = (selectedChapterData?.timeLimit || 10) * 60;
+    startTest(userName, selectedChapter, timeLimitSeconds, selectedChapterData?.name);
   };
 
   return (
@@ -42,10 +57,12 @@ const Home = ({ startTest, goToAdmin }) => {
       <div className="row justify-content-center">
         <div className="col-md-6 text-center">
           <h1 className="fw-bold text-primary mb-2">진민T 시험장</h1>
-          <p className="text-muted mb-5">오늘의 학습을 확인해봅시다!</p>
+          <p className="text-muted mb-4">오늘의 학습을 확인해봅시다!</p>
 
           <div className="card shadow border-0 p-4" style={{ borderRadius: '20px' }}>
-            <div className="mb-4">
+
+            {/* 1. 이름 입력 */}
+            <div className="mb-4 text-start">
               <label className="form-label fw-bold">1. 이름을 입력하세요</label>
               <input
                 type="text"
@@ -56,27 +73,60 @@ const Home = ({ startTest, goToAdmin }) => {
               />
             </div>
 
-            <div className="mb-4">
-              <label className="form-label fw-bold">2. 시험장을 선택하세요</label>
-              <div className="d-flex flex-wrap justify-content-center gap-2">
-                {categories.length > 0 ? (
-                  categories.map((cat) => (
+            {/* 2. 학교 선택 */}
+            <div className="mb-4 text-start">
+              <label className="form-label fw-bold">2. 학교를 선택하세요</label>
+              <div className="d-flex flex-wrap gap-2">
+                {schools.length > 0 ? (
+                  schools.map((school) => (
                     <button
-                      key={cat.id}
-                      className={`btn btn-lg px-4 ${selectedChapter === cat.id ? 'btn-primary' : 'btn-outline-primary'}`}
-                      onClick={() => setSelectedChapter(cat.id)}
+                      key={school.id}
+                      className={`btn btn-lg px-4 ${selectedSchool === school.id ? 'btn-dark' : 'btn-outline-dark'}`}
+                      onClick={() => setSelectedSchool(school.id)}
                     >
-                      {cat.name}
+                      🏫 {school.name}
                     </button>
                   ))
                 ) : (
-                  <p className="text-danger small">등록된 시험이 없습니다. 선생님에게 문의하세요.</p>
+                  <p className="text-danger small">등록된 학교가 없습니다. 선생님에게 문의하세요.</p>
                 )}
               </div>
             </div>
 
+            {/* 3. 챕터 선택 */}
+            {selectedSchool && (
+              <div className="mb-4 text-start">
+                <label className="form-label fw-bold">3. 시험장을 선택하세요</label>
+                <div className="d-flex flex-wrap gap-2">
+                  {categories.length > 0 ? (
+                    categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        className={`btn btn-lg px-4 ${selectedChapter === cat.id ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => handleSelectChapter(cat)}
+                      >
+                        {cat.name}
+                        {cat.timeLimit && (
+                          <span className="badge bg-light text-primary ms-2 small">⏱ {cat.timeLimit}분</span>
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-danger small">이 학교에 등록된 시험이 없습니다.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 선택된 챕터 시간 안내 */}
+            {selectedChapterData && (
+              <div className="alert alert-info py-2 mb-3 text-start">
+                ⏱ 제한 시간: <strong>{selectedChapterData.timeLimit || 10}분</strong>
+              </div>
+            )}
+
             <button className="btn btn-success btn-lg w-100 fw-bold py-3 shadow-sm" onClick={handleStart}>
-              시험 시작하기!
+              시험 시작하기! 🚀
             </button>
           </div>
 

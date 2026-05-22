@@ -1,35 +1,34 @@
 import React, { useState } from 'react';
-import { db } from './firebase'; 
-import { ref, get } from "firebase/database"; 
+import { db } from './firebase';
+import { ref, get } from "firebase/database";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Home from './Home';   
+import Home from './Home';
 import Login from './Login';
 import Admin from './Admin';
-import Test from './Test'; 
+import Test from './Test';
 
 export default function App() {
   const [view, setView] = useState('home');
-  const [userName, setUserName] = useState(''); 
+  const [userName, setUserName] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [wordList, setWordList] = useState([]); 
+  const [wordList, setWordList] = useState([]);
+  const [totalTime, setTotalTime] = useState(600);
+  const [chapterId, setChapterId] = useState('');
+  const [chapterName, setChapterName] = useState('');
 
-  // 🚀 핵심: Home.js에서 호출할 함수 (이름: startTest)
-  const startTest = async (name, chapterId) => {
+  const startTest = async (name, chapId, timeLimitSeconds, chapName) => {
     try {
-      // 1. 이름과 문제 리스트 초기화/설정
       setUserName(name);
-      const wordRef = ref(db, `words/${chapterId}`);
+      setTotalTime(timeLimitSeconds);
+      setChapterId(chapId);
+      setChapterName(chapName || '');
+      const wordRef = ref(db, `words/${chapId}`);
       const snapshot = await get(wordRef);
       const data = snapshot.val();
-
       if (data) {
-        // 객체를 배열로 변환
-        const list = Object.keys(data).map(key => ({
-          ...data[key],
-          id: key 
-        }));
+        const list = Object.keys(data).map(key => ({ ...data[key], id: key }));
         setWordList(list);
-        setView('test'); // 2. 시험 화면으로 이동
+        setView('test');
       } else {
         alert("이 챕터에는 등록된 문제가 없습니다!");
       }
@@ -39,39 +38,64 @@ export default function App() {
     }
   };
 
+  // 오답 재시험: wrongWords가 있으면 해당 문제만, null이면 홈으로
+  const handleTestBack = (wrongWords) => {
+    if (wrongWords && wrongWords.length > 0) {
+      // view를 잠깐 'reset'으로 바꿔서 Test 컴포넌트를 완전히 언마운트 후 재마운트
+      setView('reset');
+      setWordList(wrongWords);
+      setTimeout(() => setView('test'), 0);
+    } else {
+      setUserName('');
+      setWordList([]);
+      setChapterId('');
+      setChapterName('');
+      setView('home');
+    }
+  };
+
   return (
     <div className="bg-light min-vh-100">
+      {process.env.REACT_APP_IS_DEMO === 'true' && (
+      <div style={{
+        background: '#f59e0b',
+        color: 'white',
+        textAlign: 'center',
+        padding: '10px',
+        fontWeight: 'bold',
+        fontSize: '14px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 9999
+      }}>
+      ⚠️ 포트폴리오 데모 버전입니다 — 실제 시험과 무관한 샘플 데이터입니다
+    </div>
+    )}
+
       {view === 'home' && (
-        <Home 
-          // 👈 Home.js에서 쓰는 이름(startTest)과 여기서 넘겨주는 이름이 같아야 함!
-          startTest={startTest} 
-          goToAdmin={() => isLoggedIn ? setView('admin') : setView('login')} 
+        <Home
+          startTest={startTest}
+          goToAdmin={() => isLoggedIn ? setView('admin') : setView('login')}
         />
       )}
-
       {view === 'test' && (
-        <Test 
-          userName={userName} 
-          wordList={wordList} 
-          goBack={() => {
-            setUserName('');
-            setWordList([]);
-            setView('home');
-          }} 
+        <Test
+          userName={userName}
+          wordList={wordList}
+          totalTime={totalTime}
+          chapterId={chapterId}
+          chapterName={chapterName}
+          goBack={handleTestBack}
         />
       )}
-
       {view === 'login' && (
-        <Login 
-          onLoginSuccess={() => { setIsLoggedIn(true); setView('admin'); }} 
-          goBack={() => setView('home')} 
+        <Login
+          onLoginSuccess={() => { setIsLoggedIn(true); setView('admin'); }}
+          goBack={() => setView('home')}
         />
       )}
-      
       {view === 'admin' && (
-        <Admin 
-          goBack={() => { setIsLoggedIn(false); setView('home'); }} 
-        />
+        <Admin goBack={() => { setIsLoggedIn(false); setView('home'); }} />
       )}
     </div>
   );

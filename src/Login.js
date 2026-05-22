@@ -5,7 +5,6 @@ const Login = ({ onLoginSuccess, goBack }) => {
   const [pw, setPw] = useState('');
 
   const handleLogin = () => {
-    // 고정값 체크
     if (id === 'admin' && pw === '1234') {
       onLoginSuccess();
     } else {
@@ -18,10 +17,23 @@ const Login = ({ onLoginSuccess, goBack }) => {
       <div className="card p-4 shadow-sm" style={{ width: '100%', maxWidth: '350px' }}>
         <h3 className="text-center mb-4 fw-bold">관리자 확인</h3>
         <div className="mb-2">
-          <input type="text" className="form-control" placeholder="아이디" onChange={e => setId(e.target.value)} />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="아이디"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
+          />
         </div>
         <div className="mb-3">
-          <input type="password" className="form-control" placeholder="비밀번호" onChange={e => setPw(e.target.value)} />
+          <input
+            type="password"
+            className="form-control"
+            placeholder="비밀번호"
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+          />
         </div>
         <button className="btn btn-dark w-100 mb-2 py-2" onClick={handleLogin}>로그인</button>
         <button className="btn btn-link btn-sm text-secondary w-100" onClick={goBack}>뒤로가기</button>
