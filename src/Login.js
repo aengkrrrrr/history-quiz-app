@@ -1,36 +1,46 @@
 import React, { useState } from 'react';
+import { auth } from './firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const Login = ({ onLoginSuccess, goBack }) => {
-  const [id, setId] = useState('');
+  const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = () => {
-    if (id === 'admin' && pw === '1234') {
+  const handleLogin = async () => {
+    if (!email.trim() || !pw.trim()) { setError('이메일과 비밀번호를 입력해주세요.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
       onLoginSuccess();
-    } else {
-      alert("로그인 정보가 올바르지 않습니다.");
+    } catch (err) {
+      setError('로그인 정보가 올바르지 않습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="container vh-100 d-flex flex-column justify-content-center align-items-center">
-
       {process.env.REACT_APP_IS_DEMO === 'true' && (
         <div className="alert alert-warning text-center mb-4" style={{ width: '100%', maxWidth: '350px' }}>
           <strong>🔐 데모 관리자 계정</strong><br />
           아이디: <code>admin</code> &nbsp;|&nbsp; 비밀번호: <code>1234</code>
         </div>
       )}
-
       <div className="card p-4 shadow-sm" style={{ width: '100%', maxWidth: '350px' }}>
-        <h3 className="text-center mb-4 fw-bold">관리자 확인</h3>
+        <h3 className="text-center mb-4 fw-bold">관리자 로그인</h3>
+        {error && <div className="alert alert-danger py-2 small">{error}</div>}
         <div className="mb-2">
           <input
-            type="text"
+            type="email"
             className="form-control"
-            placeholder="아이디"
-            value={id}
-            onChange={(e) => setId(e.target.value)}
+            placeholder="이메일"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
           />
         </div>
         <div className="mb-3">
@@ -43,7 +53,9 @@ const Login = ({ onLoginSuccess, goBack }) => {
             onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
           />
         </div>
-        <button className="btn btn-dark w-100 mb-2 py-2" onClick={handleLogin}>로그인</button>
+        <button className="btn btn-dark w-100 mb-2 py-2 fw-bold" onClick={handleLogin} disabled={loading}>
+          {loading ? '로그인 중...' : '로그인'}
+        </button>
         <button className="btn btn-link btn-sm text-secondary w-100" onClick={goBack}>뒤로가기</button>
       </div>
     </div>

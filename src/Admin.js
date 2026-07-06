@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
 import { ref, push, remove, onValue, update } from "firebase/database";
 
-const Admin = ({ goBack }) => {
+const Admin = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('manage'); // 'manage' | 'results'
 
   // 학교/챕터/문제 상태
@@ -152,7 +152,7 @@ const Admin = ({ goBack }) => {
     <div className="container py-4" style={{ maxWidth: '800px' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold text-primary">진민T 시험 관리실</h2>
-        <button className="btn btn-outline-secondary btn-sm" onClick={goBack}>로그아웃</button>
+        <button className="btn btn-outline-secondary btn-sm" onClick={onLogout}>로그아웃</button>
       </div>
 
       <ul className="nav nav-tabs mb-4">
