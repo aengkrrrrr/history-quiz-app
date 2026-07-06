@@ -3,16 +3,18 @@ import { auth } from './firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const Login = ({ onLoginSuccess, goBack }) => {
-  const [email, setEmail] = useState('');
+  const [id, setId] = useState('');
   const [pw, setPw] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    if (!email.trim() || !pw.trim()) { setError('이메일과 비밀번호를 입력해주세요.'); return; }
+    if (!id.trim() || !pw.trim()) { setError('아이디와 비밀번호를 입력해주세요.'); return; }
     setLoading(true);
     setError('');
     try {
+      // admin 입력시 admin@jinmin.com 으로 자동 변환
+      const email = id === 'admin' ? 'admin@jinmin.com' : id;
       await signInWithEmailAndPassword(auth, email, pw);
       onLoginSuccess();
     } catch (err) {
@@ -27,19 +29,19 @@ const Login = ({ onLoginSuccess, goBack }) => {
       {process.env.REACT_APP_IS_DEMO === 'true' && (
         <div className="alert alert-warning text-center mb-4" style={{ width: '100%', maxWidth: '350px' }}>
           <strong>🔐 데모 관리자 계정</strong><br />
-          아이디: <code>admin</code> &nbsp;|&nbsp; 비밀번호: <code>1234</code>
+          아이디: <code>admin</code> &nbsp;|&nbsp; 비밀번호: <code>123456</code>
         </div>
       )}
       <div className="card p-4 shadow-sm" style={{ width: '100%', maxWidth: '350px' }}>
-        <h3 className="text-center mb-4 fw-bold">관리자 로그인</h3>
+        <h3 className="text-center mb-4 fw-bold">관리자 확인</h3>
         {error && <div className="alert alert-danger py-2 small">{error}</div>}
         <div className="mb-2">
           <input
-            type="email"
+            type="text"
             className="form-control"
-            placeholder="이메일"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="아이디"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
           />
         </div>
